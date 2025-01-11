@@ -1,50 +1,71 @@
 import React, { useState } from "react";
 
 function EndoscopyUploader() {
-  const [image, setImage] = useState(null); // To store the uploaded image
-  const [confidence, setConfidence] = useState(null); // To store prediction results
-  const [file, setFile] = useState(null); // To store the uploaded file
-  const [loading, setLoading] = useState(false); // For showing loading state
+  const [mode, setMode] = useState("single"); // Track upload mode (single or batch)
+  const [files, setFiles] = useState([]); // Store uploaded files
+  const [confidence, setConfidence] = useState(null); // Store prediction results
+  const [loading, setLoading] = useState(false); // Show loading state
+  const [selectedModel, setSelectedModel] = useState("model_2v"); // Default model selection
 
-  // Handle image upload
-  const handleImageUpload = (event) => {
-    const selectedFile = event.target.files[0];
-    if (selectedFile) {
-      setImage(URL.createObjectURL(selectedFile));
-      setFile(selectedFile);
+  // Handle mode change
+  const handleModeChange = (selectedMode) => {
+    setMode(selectedMode);
+    setFiles([]);
+    setConfidence(null);
+  };
+
+  // Handle file upload
+  const handleFileUpload = (event) => {
+    const selectedFiles = Array.from(event.target.files);
+
+    if (mode === "single" && selectedFiles.length > 1) {
+      alert("Please upload only one image in Single Upload mode.");
+      return;
     }
+
+    if (mode === "batch" && selectedFiles.length > 20) {
+      alert("Please upload a maximum of 20 images in Batch Processing mode.");
+      return;
+    }
+
+    setFiles(selectedFiles);
   };
 
   // Handle prediction request
   const handlePredict = async () => {
-    if (!file) {
-      alert("Please upload an image first!");
+    if (!files.length) {
+      alert("Please upload at least one image.");
       return;
     }
 
     setLoading(true);
 
     const formData = new FormData();
-    formData.append("image", file);
+    files.forEach((file) => {
+      formData.append("images", file);
+    });
+    formData.append("mode", mode);
+    formData.append("model", selectedModel); // Include selected model in the request
 
     try {
       const response = await fetch("http://127.0.0.1:8000/predict", {
-        method: "POST",
-        body: formData,
+          method: "POST",
+          body: formData,
       });
-
+  
       if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
+          const errorData = await response.json();
+          throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorData.error}`);
       }
-
+  
       const data = await response.json();
       setConfidence(data);
-    } catch (error) {
-      console.error("Error during API call:", error);
-      alert("Failed to get predictions. Please try again later.");
-    } finally {
+  } catch (error) {
+      console.error("Detailed error:", error);
+      alert(`Failed to get predictions: ${error.message}`);
+  } finally {
       setLoading(false);
-    }
+  }
   };
 
   return (
@@ -52,44 +73,139 @@ function EndoscopyUploader() {
       style={{
         textAlign: "center",
         padding: "20px",
-        backgroundColor: "#121212",
-        color: "white",
+        backgroundColor: "#F5F5F5",
+        color: "black",
         minHeight: "100vh",
       }}
     >
-      <h1>Endoscopy Image Classifier</h1>
+      <h1 style={{ color: "#4B9B6E" }}>Endoscopy Image Classifier</h1>
+
+      {/* Dropdown menu to select the model */}
+      <div style={{ marginBottom: "20px" }}>
+        <label htmlFor="model-select" style={{ fontSize: "18px", fontWeight: "bold" }}>
+          Select Model:
+        </label>
+        <select
+          id="model-select"
+          value={selectedModel}
+          onChange={(e) => setSelectedModel(e.target.value)}
+          style={{
+            marginLeft: "10px",
+            padding: "10px",
+            border: "2px solid #4B9B6E",
+            borderRadius: "5px",
+            fontSize: "16px",
+          }}
+        >
+          <option value="model_2v">Model 2v (Baseline)</option>
+          <option value="kvasir_xception_model_working_grad">Kvasir Xception Model (Grad-CAM)</option>
+        </select>
+      </div>
+
+      {/* Buttons to select Single Upload or Batch Processing */}
+      <div style={{ marginBottom: "20px" }}>
+        <button
+          onClick={() => handleModeChange("single")}
+          style={{
+            padding: "10px 20px",
+            marginRight: "10px",
+            backgroundColor: mode === "single" ? "#FFCE1B" : "#2E7D5C",
+            color: "white",
+            border: "none",
+            borderRadius: "5px",
+            cursor: "pointer",
+          }}
+        >
+          Single Upload
+        </button>
+        <button
+          onClick={() => handleModeChange("batch")}
+          style={{
+            padding: "10px 20px",
+            backgroundColor: mode === "batch" ? "#FFCE1B" : "#2E7D5C",
+            color: "white",
+            border: "none",
+            borderRadius: "5px",
+            cursor: "pointer",
+          }}
+        >
+          Batch Processing
+        </button>
+      </div>
+
+      {/* File input for uploading images */}
       <input
         type="file"
         accept="image/*"
-        onChange={handleImageUpload}
+        multiple={mode === "batch"}
+        onChange={handleFileUpload}
         style={{
           marginBottom: "20px",
           padding: "10px",
-          backgroundColor: "#65CCB8",
-          color: "white",
-          border: "none",
+          backgroundColor: "white",
+          color: "#4B9B6E",
+          border: "2px solid #4B9B6E",
           borderRadius: "5px",
           cursor: "pointer",
         }}
       />
-      {image && (
+
+      {/* Display uploaded images before prediction */}
+      {files.length > 0 && (
         <div>
-          <h2>Uploaded Image:</h2>
-          <img
-            src={image}
-            alt="Uploaded"
+          <h2 style={{ color: "#4B9B6E" }}>
+            Uploaded {mode === "single" ? "Image" : "Images"}:
+          </h2>
+          <div
             style={{
-              width: "300px",
-              height: "300px",
-              objectFit: "contain",
-              border: "1px solid #ccc",
-              borderRadius: "5px",
-              marginBottom: "20px",
+              display: "flex",
+              flexWrap: "wrap",
+              justifyContent: "center",
+              gap: "20px",
             }}
-          />
+          >
+            {files.map((file, index) => (
+              <div
+                key={index}
+                style={{
+                  position: "relative",
+                  width: "200px",
+                  height: "200px",
+                }}
+              >
+                <img
+                  src={URL.createObjectURL(file)}
+                  alt={`Uploaded ${file.name}`}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "contain",
+                    border: "1px solid #ccc",
+                    borderRadius: "5px",
+                  }}
+                />
+                <div
+                  style={{
+                    position: "absolute",
+                    bottom: "0",
+                    backgroundColor: "rgba(0, 0, 0, 0.7)",
+                    color: "white",
+                    width: "100%",
+                    textAlign: "center",
+                    padding: "5px",
+                    borderRadius: "0 0 5px 5px",
+                  }}
+                >
+                  {file.name}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
-      {image && (
+
+      {/* Prediction button */}
+      {files.length > 0 && (
         <button
           onClick={handlePredict}
           style={{
@@ -106,49 +222,75 @@ function EndoscopyUploader() {
           {loading ? "Predicting..." : "Predict"}
         </button>
       )}
-      {confidence && (
-        <div style={{ marginTop: "20px" }}>
-          <h2>Prediction Results:</h2>
-          <div>
-            <p style={{ fontSize: "24px", fontWeight: "bold" }}>
-              Predicted Class: {confidence.predictedClass} (
-              {(confidence.confidenceScores[confidence.predictedClass] * 100).toFixed(2)}%)
-            </p>
-            <h3>Other Significant Predictions:</h3>
-            {Object.entries(confidence.confidenceScores)
-              .filter(([className, score]) => score > 0) // Remove 0% confidence classes
-              .sort((a, b) => b[1] - a[1]) // Sort by confidence level descending
-              .slice(1, 3) // Take top 2 after the highest
-              .filter(
-                ([, score]) =>
-                  score >=
-                  confidence.confidenceScores[confidence.predictedClass] - 0.3
-              ).length === 0 ? (
-                <p>No additional predictions with notable confidence levels.</p>
-              ) : (
-                <ul style={{ listStyleType: "none", padding: 0 }}>
-                  {Object.entries(confidence.confidenceScores)
-                    .filter(([className, score]) => score > 0) // Remove 0% confidence classes
-                    .sort((a, b) => b[1] - a[1]) // Sort by confidence level descending
-                    .slice(1, 3) // Take top 2 after the highest
-                    .filter(
-                      ([, score]) =>
-                        score >=
-                        confidence.confidenceScores[confidence.predictedClass] -
-                          0.3
-                    )
-                    .map(([className, score]) => (
-                      <li key={className}>
-                        {className}: {(score * 100).toFixed(2)}%
-                      </li>
-                    ))}
-                </ul>
-              )}
-          </div>
+
+    {/* Display prediction results */}
+{confidence && (
+  <div style={{ marginTop: "20px" }}>
+    <h2 style={{ color: "#4B9B6E" }}>Prediction Results:</h2>
+    {confidence.map((result, index) => (
+      <div
+        key={index}
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginBottom: "20px",
+          padding: "20px",
+          backgroundColor: "white",
+          border: "4px solid #4B9B6E",
+          borderRadius: "10px",
+        }}
+      >
+        <div style={{ width: "40%" }}>
+          {files[index] && (
+            <img
+              src={URL.createObjectURL(files[index])}
+              alt={`Original ${result.filename}`}
+              style={{
+                width: "100%",
+                height: "auto",
+                objectFit: "contain",
+                borderRadius: "5px",
+              }}
+            />
+          )}
         </div>
-      )}
+        {result.gradcam && (
+          <div style={{ width: "40%" }}>
+            <img
+              src={`http://127.0.0.1:8000${result.gradcam}`}
+              alt="Grad-CAM Heatmap"
+              style={{
+                width: "100%",
+                height: "auto",
+                objectFit: "contain",
+                borderRadius: "5px",
+              }}
+            />
+          </div>
+        )}
+        <div style={{ width: "20%", textAlign: "left" }}>
+          <h3 style={{ color: "#65CCB8" }}>File: {result.filename}</h3>
+          <p style={{ fontSize: "18px", fontWeight: "bold" }}>
+            Predicted Class:{" "}
+            <span style={{ color: "#FF4C4C" }}>
+              {result.predictedClass} (
+              {(result.confidenceScores[result.predictedClass] * 100).toFixed(2)}%)
+            </span>
+          </p>
+        </div>
+      </div>
+    ))}
+  </div>
+)}
+
     </div>
   );
 }
 
 export default EndoscopyUploader;
+
+
+
+
+
