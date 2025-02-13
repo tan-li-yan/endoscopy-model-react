@@ -6,6 +6,7 @@ function EndoscopyUploader() {
   const [confidence, setConfidence] = useState(null); // Store prediction results
   const [loading, setLoading] = useState(false); // Show loading state
   const [selectedModel, setSelectedModel] = useState("model_2v"); // Default model selection
+  const [resultRefs] = useState(() => Array(20).fill(0).map(() => React.createRef())); // Create refs for scrolling
 
   // Handle mode change
   const handleModeChange = (selectedMode) => {
@@ -29,6 +30,14 @@ function EndoscopyUploader() {
     }
 
     setFiles(selectedFiles);
+  };
+
+  // Scroll to result function
+  const scrollToResult = (index) => {
+    resultRefs[index]?.current?.scrollIntoView({ 
+      behavior: 'smooth',
+      block: 'start'
+    });
   };
 
   // Handle prediction request
@@ -60,12 +69,12 @@ function EndoscopyUploader() {
   
       const data = await response.json();
       setConfidence(data);
-  } catch (error) {
+    } catch (error) {
       console.error("Detailed error:", error);
       alert(`Failed to get predictions: ${error.message}`);
-  } finally {
+    } finally {
       setLoading(false);
-  }
+    }
   };
 
   return (
@@ -223,74 +232,118 @@ function EndoscopyUploader() {
         </button>
       )}
 
-    {/* Display prediction results */}
-{confidence && (
-  <div style={{ marginTop: "20px" }}>
-    <h2 style={{ color: "#4B9B6E" }}>Prediction Results:</h2>
-    {confidence.map((result, index) => (
-      <div
-        key={index}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          marginBottom: "20px",
-          padding: "20px",
-          backgroundColor: "white",
-          border: "4px solid #4B9B6E",
-          borderRadius: "10px",
-        }}
-      >
-        <div style={{ width: "40%" }}>
-          {files[index] && (
-            <img
-              src={URL.createObjectURL(files[index])}
-              alt={`Original ${result.filename}`}
-              style={{
-                width: "100%",
-                height: "auto",
-                objectFit: "contain",
-                borderRadius: "5px",
-              }}
-            />
-          )}
-        </div>
-        {result.gradcam && (
-          <div style={{ width: "40%" }}>
-            <img
-              src={`http://127.0.0.1:8000${result.gradcam}`}
-              alt="Grad-CAM Heatmap"
-              style={{
-                width: "100%",
-                height: "auto",
-                objectFit: "contain",
-                borderRadius: "5px",
-              }}
-            />
+      {/* Summary Table for Batch Predictions */}
+      {confidence && mode === "batch" && (
+        <div style={{ marginTop: "20px", marginBottom: "20px" }}>
+          <h2 style={{ color: "#4B9B6E" }}>Summary Results</h2>
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ 
+              width: "100%", 
+              borderCollapse: "collapse", 
+              backgroundColor: "white",
+              border: "2px solid #4B9B6E",
+              borderRadius: "5px",
+            }}>
+              <thead>
+                <tr style={{ backgroundColor: "#4B9B6E", color: "white" }}>
+                  <th style={{ padding: "12px", textAlign: "left" }}>File Name</th>
+                  <th style={{ padding: "12px", textAlign: "left" }}>Predicted Class</th>
+                  <th style={{ padding: "12px", textAlign: "left" }}>Confidence Level</th>
+                </tr>
+              </thead>
+              <tbody>
+                {confidence.map((result, index) => (
+                  <tr 
+                    key={index}
+                    onClick={() => scrollToResult(index)}
+                    style={{
+                      cursor: "pointer",
+                      backgroundColor: "white",
+                      borderBottom: "1px solid #ddd",
+                      ':hover': {
+                        backgroundColor: "#f5f5f5"
+                      }
+                    }}
+                  >
+                    <td style={{ padding: "12px" }}>{result.filename}</td>
+                    <td style={{ padding: "12px" }}>{result.predictedClass}</td>
+                    <td style={{ padding: "12px" }}>
+                      {(result.confidenceScores[result.predictedClass] * 100).toFixed(2)}%
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
-        )}
-        <div style={{ width: "20%", textAlign: "left" }}>
-          <h3 style={{ color: "#65CCB8" }}>File: {result.filename}</h3>
-          <p style={{ fontSize: "18px", fontWeight: "bold" }}>
-            Predicted Class:{" "}
-            <span style={{ color: "#FF4C4C" }}>
-              {result.predictedClass} (
-              {(result.confidenceScores[result.predictedClass] * 100).toFixed(2)}%)
-            </span>
-          </p>
         </div>
-      </div>
-    ))}
-  </div>
-)}
+      )}
 
+      {/* Display prediction results */}
+      {confidence && (
+        <div style={{ marginTop: "20px" }}>
+          <h2 style={{ color: "#4B9B6E" }}>Prediction Results:</h2>
+          {confidence.map((result, index) => (
+            <div
+              key={index}
+              ref={resultRefs[index]}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: "20px",
+                padding: "20px",
+                backgroundColor: "white",
+                border: "4px solid #4B9B6E",
+                borderRadius: "10px",
+              }}
+            >
+              <div style={{ width: "40%" }}>
+                {files[index] && (
+                  <img
+                    src={URL.createObjectURL(files[index])}
+                    alt={`Original ${result.filename}`}
+                    style={{
+                      width: "100%",
+                      height: "auto",
+                      objectFit: "contain",
+                      borderRadius: "5px",
+                    }}
+                  />
+                )}
+              </div>
+              {result.gradcam && (
+                <div style={{ width: "40%" }}>
+                  <img
+                    src={`http://127.0.0.1:8000${result.gradcam}`}
+                    alt="Grad-CAM Heatmap"
+                    style={{
+                      width: "100%",
+                      height: "auto",
+                      objectFit: "contain",
+                      borderRadius: "5px",
+                    }}
+                  />
+                </div>
+              )}
+              <div style={{ width: "20%", textAlign: "left" }}>
+                <h3 style={{ color: "#65CCB8" }}>File: {result.filename}</h3>
+                <p style={{ fontSize: "18px", fontWeight: "bold" }}>
+                  Predicted Class:{" "}
+                  <span style={{ color: "#FF4C4C" }}>
+                    {result.predictedClass} (
+                    {(result.confidenceScores[result.predictedClass] * 100).toFixed(2)}%)
+                  </span>
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
 export default EndoscopyUploader;
-
-
 
 
 
