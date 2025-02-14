@@ -349,6 +349,7 @@ import React, {useState} from "react";
 import ModelSelector from "./components/ModelSelector";
 import UploadModeSelector from "./components/UploadModeSelector";
 import FileUploader from "./components/FileUploader";
+import ImagePreview from "./components/ImagePreview";
 
 function EndoscopyUploader(){
   const [mode, setMode] = useState("single");
@@ -363,6 +364,7 @@ function EndoscopyUploader(){
       <ModelSelector selectedModel={selectedModel} setSelectedModel={setSelectedModel} />
       <UploadModeSelector mode={mode} setMode={setMode} setFiles={setFiles} />
       <FileUploader mode={mode} setFiles={setFiles} />
+      <ImagePreview files={files} />
     </div>
 
     
