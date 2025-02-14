@@ -350,14 +350,47 @@ import ModelSelector from "./components/ModelSelector";
 import UploadModeSelector from "./components/UploadModeSelector";
 import FileUploader from "./components/FileUploader";
 import ImagePreview from "./components/ImagePreview";
+import PredictionButton from "./components/PredictionButton";
 
 function EndoscopyUploader(){
   const [mode, setMode] = useState("single");
   const [files, setFiles] = useState([]);
+  const [confidence, setConfidence] = useState(null);
+  const [loading, setLoading] = useState(false);
   const [selectedModel, setSelectedModel] = useState("model_2v");
+  // Handle the request for predictions
   const handlePredict = async () => {
+    if (!files.length) {
+      alert("Please upload at least one image.");
+      return;
+    }
 
-  }
+    setLoading(true);
+    const formData = new FormData();
+    files.forEach((file) => {
+      formData.append("images", file);
+    });
+    formData.append("mode", mode);
+    formData.append("model", selectedModel);
+
+    try {
+      const response = await fetch("http://127.0.0.1:8000/predict", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setConfidence(data);
+    } catch (error) {
+      alert(`Failed to get predictions: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
   return (
     <div className="app-container">
       <h1 className = "title"> Endoscopy Image Classifier </h1>
@@ -365,6 +398,7 @@ function EndoscopyUploader(){
       <UploadModeSelector mode={mode} setMode={setMode} setFiles={setFiles} />
       <FileUploader mode={mode} setFiles={setFiles} />
       <ImagePreview files={files} />
+      <PredictionButton files={files} handlePredict={handlePredict} loading={loading} />
     </div>
 
     
