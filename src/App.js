@@ -351,11 +351,12 @@ import UploadModeSelector from "./components/UploadModeSelector";
 import FileUploader from "./components/FileUploader";
 import ImagePreview from "./components/ImagePreview";
 import PredictionButton from "./components/PredictionButton";
+import PredictionResults from "./components/PredictionResults";
 
 function EndoscopyUploader(){
   const [mode, setMode] = useState("single");
   const [files, setFiles] = useState([]);
-  const [confidence, setConfidence] = useState(null);
+  const [confidence, setConfidence] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedModel, setSelectedModel] = useState("model_2v");
   // Handle the request for predictions
@@ -399,6 +400,7 @@ function EndoscopyUploader(){
       <FileUploader mode={mode} setFiles={setFiles} />
       <ImagePreview files={files} />
       <PredictionButton files={files} handlePredict={handlePredict} loading={loading} />
+      {confidence.length > 0 && <PredictionResults confidence={confidence} files={files} />}
     </div>
 
     
