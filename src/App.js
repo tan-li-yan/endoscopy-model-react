@@ -365,7 +365,7 @@ function EndoscopyUploader(){
       alert("Please upload at least one image.");
       return;
     }
-
+  
     setLoading(true);
     const formData = new FormData();
     files.forEach((file) => {
@@ -373,19 +373,30 @@ function EndoscopyUploader(){
     });
     formData.append("mode", mode);
     formData.append("model", selectedModel);
-
+  
     try {
       const response = await fetch("http://127.0.0.1:8000/predict", {
         method: "POST",
         body: formData,
       });
-
+  
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
-
+  
       const data = await response.json();
-      setConfidence(data);
+      console.log("Received data:", data);
+  
+      if (Array.isArray(data) && data.length > 0) {
+        const updatedResults = data.map((prediction, index) => ({
+          ...prediction,
+          file: files[index], // Associate uploaded file with result
+        }));
+        setConfidence(updatedResults);
+        setFiles([]);  // Clear image previews after prediction
+      } else {
+        alert("Unexpected response format. Please check the console.");
+      }
     } catch (error) {
       alert(`Failed to get predictions: ${error.message}`);
     } finally {
