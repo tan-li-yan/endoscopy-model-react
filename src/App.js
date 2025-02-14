@@ -352,6 +352,7 @@ import FileUploader from "./components/FileUploader";
 import ImagePreview from "./components/ImagePreview";
 import PredictionButton from "./components/PredictionButton";
 import PredictionResults from "./components/PredictionResults";
+import SummaryTable from "./components/SummaryTable";
 
 function EndoscopyUploader(){
   const [mode, setMode] = useState("single");
@@ -411,6 +412,7 @@ function EndoscopyUploader(){
       <FileUploader mode={mode} setFiles={setFiles} />
       <ImagePreview files={files} />
       <PredictionButton files={files} handlePredict={handlePredict} loading={loading} />
+      {confidence && mode === "batch" && <SummaryTable confidence={confidence} />}
       {confidence.length > 0 && <PredictionResults confidence={confidence} files={files} />}
     </div>
 
