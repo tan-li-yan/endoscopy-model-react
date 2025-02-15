@@ -1,11 +1,12 @@
 import React from "react";
 
-
-function PredictionButton({ files, handlePredict, loading }) {
+function PredictionButton({ handlePredict, loading }) {
   return (
-    <button onClick={handlePredict} className="predict-button">
-      {loading ? "Predicting..." : "Predict"}
-    </button>
+    <div className="prediction-button-container">
+      <button onClick={handlePredict} className="predict-button">
+        {loading ? "Predicting..." : "Predict"}
+      </button>
+    </div>
   );
 }
 
