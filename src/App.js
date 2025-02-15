@@ -382,7 +382,7 @@ function EndoscopyUploader() {
     formData.append("model", selectedModel);
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/predict/", {
+      const response = await fetch("http://127.0.0.1:8000/predict", {
         method: "POST",
         body: formData,
       });
@@ -395,13 +395,11 @@ function EndoscopyUploader() {
       const data = await response.json();
       console.log("Received data:", data);
 
-      if (Array.isArray(data) && data.length > 0) {
-        // Map the received predictions to match the expected format
-        const updatedResults = data.map((prediction) => ({
+      if (Array.isArray(data.predictions)) {
+        const updatedResults = data.predictions.map((prediction) => ({
           filename: prediction.filename,
           class: prediction.predictedClass,
-          confidence: prediction.confidenceScores,
-          gradcam: prediction.gradcam,
+          confidence: prediction.confidenceScores,  // This will now be an array of {class, score} objects
           file: files.find(f => f.name === prediction.filename)
         }));
 
