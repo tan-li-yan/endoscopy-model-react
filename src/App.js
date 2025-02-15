@@ -346,7 +346,7 @@
 // export default EndoscopyUploader;
 
 import React, { useState } from "react";
-import "./styles/global.css"; 
+import "./styles/global.css";
 import ModelSelector from "./components/ModelSelector";
 import UploadModeSelector from "./components/UploadModeSelector";
 import FileUploader from "./components/FileUploader";
@@ -355,7 +355,6 @@ import PredictionButton from "./components/PredictionButton";
 import PredictionResults from "./components/PredictionResults";
 import SummaryTable from "./components/SummaryTable";
 
-
 function EndoscopyUploader() {
   const [mode, setMode] = useState("single");
   const [files, setFiles] = useState([]);
@@ -363,7 +362,6 @@ function EndoscopyUploader() {
   const [loading, setLoading] = useState(false);
   const [selectedModel, setSelectedModel] = useState("model_2v");
 
-  // Handle the request for predictions
   const handlePredict = async () => {
     if (!files.length) {
       alert("Please upload at least one image.");
@@ -372,12 +370,12 @@ function EndoscopyUploader() {
 
     setLoading(true);
     const formData = new FormData();
-    
-    // Append each file with a unique index
-    files.forEach((file, index) => {
-      formData.append(`images`, file);
+
+    // Append each file
+    files.forEach((file) => {
+      formData.append('images', file);
     });
-    
+
     formData.append("mode", mode);
     formData.append("model", selectedModel);
 
@@ -393,22 +391,11 @@ function EndoscopyUploader() {
       }
 
       const data = await response.json();
-      console.log("Received data:", data);
+      console.log("Received data from server:", data);
 
-      if (Array.isArray(data.predictions)) {
-        const updatedResults = data.predictions.map((prediction) => ({
-          filename: prediction.filename,
-          class: prediction.predictedClass,
-          confidence: prediction.confidenceScores,  // This will now be an array of {class, score} objects
-          file: files.find(f => f.name === prediction.filename)
-        }));
-
-        setConfidence(updatedResults);
-        // Only clear files after successful prediction
-        setFiles([]);
-      } else {
-        throw new Error("Unexpected response format");
-      }
+      setConfidence(data);
+      
+      
     } catch (error) {
       alert(`Failed to get predictions: ${error.message}`);
       console.error("Prediction error:", error);
@@ -420,20 +407,30 @@ function EndoscopyUploader() {
   return (
     <div className="app-container">
       <h1 className="title">Endoscopy Image Classifier</h1>
-      <ModelSelector selectedModel={selectedModel} setSelectedModel={setSelectedModel} />
-      <UploadModeSelector mode={mode} setMode={setMode} setFiles={setFiles} />
+      <ModelSelector 
+        selectedModel={selectedModel} 
+        setSelectedModel={setSelectedModel} 
+      />
+      <UploadModeSelector 
+        mode={mode} 
+        setMode={setMode} 
+        setFiles={setFiles} 
+      />
       <FileUploader mode={mode} setFiles={setFiles} />
       <ImagePreview files={files} />
-      <PredictionButton 
-        files={files} 
-        handlePredict={handlePredict} 
-        loading={loading} 
+      <PredictionButton
+        files={files}
+        handlePredict={handlePredict}
+        loading={loading}
       />
       {confidence.length > 0 && mode === "batch" && (
         <SummaryTable confidence={confidence} />
       )}
       {confidence.length > 0 && (
-        <PredictionResults confidence={confidence} files={files} />
+        <PredictionResults 
+          confidence={confidence} 
+          files={files} 
+        />
       )}
     </div>
   );
