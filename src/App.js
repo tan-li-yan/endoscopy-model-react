@@ -345,7 +345,8 @@
 
 // export default EndoscopyUploader;
 
-import React, {useState} from "react";
+import React, { useState } from "react";
+import "./styles/global.css"; 
 import ModelSelector from "./components/ModelSelector";
 import UploadModeSelector from "./components/UploadModeSelector";
 import FileUploader from "./components/FileUploader";
@@ -354,69 +355,89 @@ import PredictionButton from "./components/PredictionButton";
 import PredictionResults from "./components/PredictionResults";
 import SummaryTable from "./components/SummaryTable";
 
-function EndoscopyUploader(){
+
+function EndoscopyUploader() {
   const [mode, setMode] = useState("single");
   const [files, setFiles] = useState([]);
   const [confidence, setConfidence] = useState([]);
   const [loading, setLoading] = useState(false);
   const [selectedModel, setSelectedModel] = useState("model_2v");
+
   // Handle the request for predictions
   const handlePredict = async () => {
     if (!files.length) {
       alert("Please upload at least one image.");
       return;
     }
-  
+
     setLoading(true);
     const formData = new FormData();
-    files.forEach((file) => {
-      formData.append("images", file);
+    
+    // Append each file with a unique index
+    files.forEach((file, index) => {
+      formData.append(`images`, file);
     });
+    
     formData.append("mode", mode);
     formData.append("model", selectedModel);
-  
+
     try {
-      const response = await fetch("http://127.0.0.1:8000/predict", {
+      const response = await fetch("http://127.0.0.1:8000/predict/", {
         method: "POST",
         body: formData,
       });
-  
+
       if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
+        const errorData = await response.json();
+        throw new Error(errorData.error || `HTTP error! Status: ${response.status}`);
       }
-  
+
       const data = await response.json();
       console.log("Received data:", data);
-  
+
       if (Array.isArray(data) && data.length > 0) {
-        const updatedResults = data.map((prediction, index) => ({
-          ...prediction,
-          file: files[index], // Associate uploaded file with result
+        // Map the received predictions to match the expected format
+        const updatedResults = data.map((prediction) => ({
+          filename: prediction.filename,
+          class: prediction.predictedClass,
+          confidence: prediction.confidenceScores,
+          gradcam: prediction.gradcam,
+          file: files.find(f => f.name === prediction.filename)
         }));
+
         setConfidence(updatedResults);
-        setFiles([]);  // Clear image previews after prediction
+        // Only clear files after successful prediction
+        setFiles([]);
       } else {
-        alert("Unexpected response format. Please check the console.");
+        throw new Error("Unexpected response format");
       }
     } catch (error) {
       alert(`Failed to get predictions: ${error.message}`);
+      console.error("Prediction error:", error);
     } finally {
       setLoading(false);
     }
   };
+
   return (
     <div className="app-container">
-      <h1 className = "title"> Endoscopy Image Classifier </h1>
+      <h1 className="title">Endoscopy Image Classifier</h1>
       <ModelSelector selectedModel={selectedModel} setSelectedModel={setSelectedModel} />
       <UploadModeSelector mode={mode} setMode={setMode} setFiles={setFiles} />
       <FileUploader mode={mode} setFiles={setFiles} />
       <ImagePreview files={files} />
-      <PredictionButton files={files} handlePredict={handlePredict} loading={loading} />
-      {confidence && mode === "batch" && <SummaryTable confidence={confidence} />}
-      {confidence.length > 0 && <PredictionResults confidence={confidence} files={files} />}
+      <PredictionButton 
+        files={files} 
+        handlePredict={handlePredict} 
+        loading={loading} 
+      />
+      {confidence.length > 0 && mode === "batch" && (
+        <SummaryTable confidence={confidence} />
+      )}
+      {confidence.length > 0 && (
+        <PredictionResults confidence={confidence} files={files} />
+      )}
     </div>
-
-    
   );
 }
 

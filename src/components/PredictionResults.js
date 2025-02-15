@@ -1,5 +1,6 @@
 import React from "react";
 
+
 function PredictionResults({ confidence, files }) {
   if (!confidence || confidence.length === 0) {
     return <p>No predictions available.</p>;

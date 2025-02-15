@@ -1,0 +1,93 @@
+/* global.css */
+
+/* Title Styling */
+.title {
+  color: #4B9B6E;
+  font-size: 28px;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+/* Model Selector Container - Centered */
+.model-selector {
+  display: flex;
+  align-items: center;  
+  justify-content: center; 
+  gap: 10px;  
+  font-size: 18px;
+  font-weight: bold;
+  color: #4B9B6E;
+  margin-bottom: 20px;
+}
+
+/* Model Selector Dropdown */
+.model-selector select {
+  padding: 10px;
+  font-size: 16px;
+  border: 2px solid #4B9B6E;
+  border-color: #6ecdba;
+  border-radius: 5px;
+  background-color: white;
+  color: #121714;
+  cursor: pointer;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+/* Upload Mode Selector Container */
+.upload-mode-selector {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+/* Upload Mode Buttons (Default State) */
+.upload-mode-selector button {
+  padding: 10px 20px;
+  font-size: 16px;
+  border: none;
+  border-radius: 5px;
+  background-color: #2E7D5C; 
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+/* Change to Yellow When Selected */
+.upload-mode-selector button.active {
+  background-color: #FFCE1B; 
+  color: black;
+}
+
+/* Hover Effect */
+.upload-mode-selector button:hover {
+  background-color: #4B9B6E;
+}
+
+/* Click/Active Effect */
+.upload-mode-selector button:active {
+  transform: scale(0.98);
+}
+
+/* Prediction Button Styling */
+.predict-button {
+  padding: 10px 20px;
+  font-size: 16px;
+  font-weight: bold;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  background-color: #6ecdba; 
+  color: white;
+  margin-top: 10px;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+/* Common Styles for the Entire App */
+body {
+  background-color: #F5F5F5;
+  font-family: Arial, sans-serif;
+  color: black;
+  text-align: center;
+}
+

@@ -1,0 +1,35 @@
+/* UploadModeSelector.css */
+
+.upload-mode-selector {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.upload-mode-selector button {
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: bold;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  background-color: #2E7D5C; /* Default green */
+  color: white;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.upload-mode-selector button:hover {
+  background-color: #4B9B6E; /* Darker green on hover */
+  transform: scale(1.05); /* Slight scale effect */
+}
+
+.upload-mode-selector button:active {
+  transform: scale(0.95); /* Click animation */
+}
+
+.upload-mode-selector button.selected {
+  background-color: #FFCE1B; /* Highlight selected mode */
+  color: black;
+}
